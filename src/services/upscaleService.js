@@ -15,7 +15,15 @@ export const SAMPLE_IMAGES = {
   enhancedLandscape: "https://images.unsplash.com/photo-1472214222541-d510753a8707?auto=format&fit=crop&q=85&w=1200"
 };
 
-const BACKEND_URL = 'http://localhost:5000';
+export const getBackendUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // Fallback to host IP on port 5000 for local network mobile testing
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}:5000`;
+};
 
 /**
  * Sends an image to the backend upscaler on port 5000
@@ -72,7 +80,8 @@ export const handleEnhanceImage = async ({
     formData.append('fidelity', fidelity.toString());
 
     console.log('Sending image to backend for enhancement...');
-    const apiRes = await fetch(`${BACKEND_URL}/api/upscale`, {
+    const backendUrl = getBackendUrl();
+    const apiRes = await fetch(`${backendUrl}/api/upscale`, {
       method: 'POST',
       body: formData
     });

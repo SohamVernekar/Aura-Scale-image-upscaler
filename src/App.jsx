@@ -3,7 +3,7 @@ import { Sparkles, RefreshCw, Download, Image as ImageIcon, CheckCircle, Wand2, 
 import UploadZone from './components/UploadZone';
 import ControlPanel from './components/ControlPanel';
 import ComparisonSlider from './components/ComparisonSlider';
-import { handleEnhanceImage, SAMPLE_IMAGES, resizeImageIfNeeded } from './services/upscaleService';
+import { handleEnhanceImage, SAMPLE_IMAGES, resizeImageIfNeeded, getBackendUrl } from './services/upscaleService';
 
 export default function App() {
   // Core application states
@@ -88,7 +88,8 @@ export default function App() {
 
     // If it's a remote URL from Hugging Face, proxy it through our server
     if (processedImage.startsWith('http')) {
-      const backendDownloadUrl = `http://localhost:5000/api/download?url=${encodeURIComponent(processedImage)}`;
+      const backendUrl = getBackendUrl();
+      const backendDownloadUrl = `${backendUrl}/api/download?url=${encodeURIComponent(processedImage)}`;
       // Direct navigation assignment triggers file download dialog without changing page context or triggering popup blockers
       window.location.href = backendDownloadUrl;
     } else {
