@@ -12,11 +12,23 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Model tuning parameters
+  const [mode, setMode] = useState('portrait');
   const [faceEnhance, setFaceEnhance] = useState(true);
   const [backgroundEnhance, setBackgroundEnhance] = useState(true);
   const [fidelity, setFidelity] = useState(0.6);
   const [upscaleFactor, setUpscaleFactor] = useState(2);
   const [isDemoSample, setIsDemoSample] = useState(false);
+
+  const handleModeChange = (newMode) => {
+    setMode(newMode);
+    if (newMode === 'portrait') {
+      setFaceEnhance(true);
+      setBackgroundEnhance(true);
+    } else {
+      setFaceEnhance(false);
+      setBackgroundEnhance(true);
+    }
+  };
 
   // UX states
   const [progress, setProgress] = useState(0);
@@ -326,6 +338,8 @@ export default function App() {
                 onEnhance={handleEnhance}
                 isProcessing={isProcessing}
                 hasImage={!!originalImage}
+                mode={mode}
+                setMode={handleModeChange}
               />
             </div>
             

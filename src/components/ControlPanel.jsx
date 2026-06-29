@@ -12,7 +12,9 @@ export default function ControlPanel({
   setUpscaleFactor,
   onEnhance,
   isProcessing,
-  hasImage
+  hasImage,
+  mode,
+  setMode
 }) {
   const [activeTooltip, setActiveTooltip] = useState(null);
 
@@ -35,89 +37,136 @@ export default function ControlPanel({
         <p className="text-xs text-slate-400">Configure AI model parameters for upscale results.</p>
       </div>
 
-      <div className="space-y-6 flex-grow">
-        {/* Toggle 1: Face Restoration */}
-        <div className="space-y-3 p-4 rounded-xl bg-slate-950/40 border border-slate-900">
-          <div className="flex items-center justify-between">
-            <label className="flex flex-col cursor-pointer select-none">
-              <span className="text-sm font-semibold text-slate-200">Fix Blurry Faces</span>
-              <span className="text-xs text-slate-500 font-mono">CodeFormer Model</span>
-            </label>
-            <div className="flex items-center gap-2">
-              {/* Tooltip trigger */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onMouseEnter={() => setActiveTooltip('face')}
-                  onMouseLeave={() => setActiveTooltip(null)}
-                  onClick={() => toggleTooltip('face')}
-                  className="text-slate-500 hover:text-slate-300 transition-colors p-1"
-                  aria-label="Face Restoration Help"
-                >
-                  <HelpCircle className="w-4 h-4" />
-                </button>
-                {activeTooltip === 'face' && (
-                  <div className="absolute right-0 bottom-full mb-2 w-64 p-3 bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed">
-                    Uses AI to restore, deblur, and re-synthesize facial features while maintaining realism. Perfect for vintage or out-of-focus portraits.
-                  </div>
-                )}
-              </div>
-              {/* Toggle switch */}
-              <button
-                type="button"
-                onClick={() => setFaceEnhance(!faceEnhance)}
-                disabled={isProcessing}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  faceEnhance ? 'bg-violet-600' : 'bg-slate-800'
-                } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                    faceEnhance ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-
-          {/* Slider for Fidelity: Only display when Face Enhancement is active */}
-          <div 
-            className={`space-y-2 pt-2 transition-all duration-300 origin-top ${
-              faceEnhance ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0 overflow-hidden pointer-events-none'
+      {/* Mode Selector */}
+      <div className="space-y-2">
+        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">Enhancement Mode</label>
+        <div className="grid grid-cols-3 gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-900">
+          <button
+            type="button"
+            disabled={isProcessing}
+            onClick={() => setMode('portrait')}
+            className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+              mode === 'portrait'
+                ? 'bg-gradient-to-r from-violet-650 to-violet-550 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
+            Portrait
+          </button>
+          <button
+            type="button"
+            disabled={isProcessing}
+            onClick={() => setMode('general')}
+            className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+              mode === 'general'
+                ? 'bg-gradient-to-r from-violet-650 to-violet-550 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            General
+          </button>
+          <button
+            type="button"
+            disabled={isProcessing}
+            onClick={() => setMode('anime')}
+            className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+              mode === 'anime'
+                ? 'bg-gradient-to-r from-violet-650 to-violet-550 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Art/Anime
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-6 flex-grow">
+        {/* Toggle 1: Face Restoration */}
+        {mode === 'portrait' && (
+          <div className="space-y-3 p-4 rounded-xl bg-slate-950/40 border border-slate-900">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400 font-medium">Fidelity (Face Identity Preservation)</span>
-              <span className="text-xs font-bold text-violet-400 bg-violet-950/40 px-2 py-0.5 rounded border border-violet-900/50 font-mono">{fidelity.toFixed(1)}</span>
+              <label className="flex flex-col cursor-pointer select-none">
+                <span className="text-sm font-semibold text-slate-200">Fix Blurry Faces</span>
+                <span className="text-xs text-slate-500 font-mono">CodeFormer Model</span>
+              </label>
+              <div className="flex items-center gap-2">
+                {/* Tooltip trigger */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onMouseEnter={() => setActiveTooltip('face')}
+                    onMouseLeave={() => setActiveTooltip(null)}
+                    onClick={() => toggleTooltip('face')}
+                    className="text-slate-500 hover:text-slate-300 transition-colors p-1"
+                    aria-label="Face Restoration Help"
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                  </button>
+                  {activeTooltip === 'face' && (
+                    <div className="absolute right-0 bottom-full mb-2 w-64 p-3 bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed">
+                      Uses AI to restore, deblur, and re-synthesize facial features while maintaining realism. Perfect for vintage or out-of-focus portraits.
+                    </div>
+                  )}
+                </div>
+                {/* Toggle switch */}
+                <button
+                  type="button"
+                  onClick={() => setFaceEnhance(!faceEnhance)}
+                  disabled={isProcessing}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    faceEnhance ? 'bg-violet-600' : 'bg-slate-800'
+                  } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                      faceEnhance ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
-            
-            <div className="relative">
-              <input
-                type="range"
-                min="0.0"
-                max="1.0"
-                step="0.1"
-                value={fidelity}
-                disabled={isProcessing}
-                onChange={(e) => setFidelity(parseFloat(e.target.value))}
-                className="w-full cursor-pointer accent-violet-500 disabled:opacity-50"
-              />
-              {/* Tooltip trigger for slider details */}
-              <div className="mt-2 flex items-start gap-1 bg-slate-900/60 p-2 rounded-lg border border-slate-850">
-                <ShieldAlert className="w-3.5 h-3.5 text-violet-400/80 shrink-0 mt-0.5" />
-                <span className="text-[10px] text-slate-400 leading-normal">
-                  Lower values fix heavy blur but may change facial identity; higher values keep original shape but reduce sharpening.
-                </span>
+
+            {/* Slider for Fidelity: Only display when Face Enhancement is active */}
+            <div 
+              className={`space-y-2 pt-2 transition-all duration-300 origin-top ${
+                faceEnhance ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0 overflow-hidden pointer-events-none'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400 font-medium">Fidelity (Face Identity Preservation)</span>
+                <span className="text-xs font-bold text-violet-400 bg-violet-950/40 px-2 py-0.5 rounded border border-violet-900/50 font-mono">{fidelity.toFixed(1)}</span>
+              </div>
+              
+              <div className="relative">
+                <input
+                  type="range"
+                  min="0.0"
+                  max="1.0"
+                  step="0.1"
+                  value={fidelity}
+                  disabled={isProcessing}
+                  onChange={(e) => setFidelity(parseFloat(e.target.value))}
+                  className="w-full cursor-pointer accent-violet-500 disabled:opacity-50"
+                />
+                {/* Tooltip trigger for slider details */}
+                <div className="mt-2 flex items-start gap-1 bg-slate-900/60 p-2 rounded-lg border border-slate-850">
+                  <ShieldAlert className="w-3.5 h-3.5 text-violet-400/80 shrink-0 mt-0.5" />
+                  <span className="text-[10px] text-slate-400 leading-normal">
+                    Lower values fix heavy blur but may change facial identity; higher values keep original shape but reduce sharpening.
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Toggle 2: Background Enhance */}
         <div className="space-y-3 p-4 rounded-xl bg-slate-950/40 border border-slate-900 flex items-center justify-between">
           <label className="flex flex-col cursor-pointer select-none">
             <span className="text-sm font-semibold text-slate-200">Sharpen Background</span>
-            <span className="text-xs text-slate-500 font-mono">Real-ESRGAN Model</span>
+            <span className="text-xs text-slate-500 font-mono">
+              {mode === 'anime' ? 'Real-ESRGAN Anime' : mode === 'general' ? 'Swin2SR / Real-ESRGAN' : 'Real-ESRGAN Model'}
+            </span>
           </label>
           <div className="flex items-center gap-2">
             {/* Tooltip trigger */}
