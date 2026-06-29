@@ -83,14 +83,26 @@ app.post('/api/upscale', upload.single('image'), async (req, res) => {
 
                 console.log(`Executing AI restoration on ${space}: Face Upsample=${faceUpsample}, Background Enhance=${backgroundEnhance}, Scale=${upscaleFactor}x, Fidelity=${fidelity}`);
 
-                result = await hfClient.predict("/inference", [
-                    imageBlob,
-                    true, // face_align (pre-align faces for best restoration results)
-                    backgroundEnhance,
-                    faceUpsample,
-                    upscaleFactor,
-                    fidelity,
-                ]);
+                let timeoutId;
+                const timeoutPromise = new Promise((_, reject) => {
+                    timeoutId = setTimeout(() => reject(new Error("Hugging Face Space timeout (20s reached)")), 20000);
+                });
+
+                try {
+                    result = await Promise.race([
+                        hfClient.predict("/inference", [
+                            imageBlob,
+                            true, // face_align (pre-align faces for best restoration results)
+                            backgroundEnhance,
+                            faceUpsample,
+                            upscaleFactor,
+                            fidelity,
+                        ]),
+                        timeoutPromise
+                    ]);
+                } finally {
+                    clearTimeout(timeoutId);
+                }
 
                 console.log(`Processing successful on space: ${space}`);
                 break; // Break loop if prediction succeeds
