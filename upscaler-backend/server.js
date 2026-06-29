@@ -64,11 +64,25 @@ app.post('/api/upscale', upload.single('image'), async (req, res) => {
             console.log("No Hugging Face token found. Running in anonymous mode (subject to shared rate limits).");
         }
 
-        // List of alternative CodeFormer spaces on Hugging Face as a failover cluster
+        // List of alternative CodeFormer spaces on Hugging Face as an adaptive failover cluster
         const spaces = [
-            "sczhou/CodeFormer",
-            "leonelhs/CodeFormer",
-            "Tzktz/codeformer-face-restorization"
+            {
+                name: "sczhou/CodeFormer",
+                endpoint: "/inference",
+                buildParams: (image, face_align, background_enhance, face_upsample, upscale, fidelity) => [
+                    image,
+                    face_align,
+                    background_enhance,
+                    face_upsample,
+                    upscale,
+                    fidelity
+                ]
+            },
+            {
+                name: "leonelhs/CodeFormer",
+                endpoint: "/predict",
+                buildParams: (image) => [image]
+            }
         ];
 
         let result = null;
@@ -77,37 +91,43 @@ app.post('/api/upscale', upload.single('image'), async (req, res) => {
 
         for (const space of spaces) {
             try {
-                console.log(`Connecting to Hugging Face space: ${space}...`);
-                const hfClient = await Client.connect(space, connectOptions);
-                activeSpace = space;
+                console.log(`Connecting to Hugging Face space: ${space.name}...`);
+                const hfClient = await Client.connect(space.name, connectOptions);
+                activeSpace = space.name;
 
-                console.log(`Executing AI restoration on ${space}: Face Upsample=${faceUpsample}, Background Enhance=${backgroundEnhance}, Scale=${upscaleFactor}x, Fidelity=${fidelity}`);
+                const params = space.buildParams(
+                    imageBlob,
+                    true, // face_align (pre-align faces for best restoration results)
+                    backgroundEnhance,
+                    faceUpsample,
+                    upscaleFactor,
+                    fidelity
+                );
+
+                console.log(`Executing AI restoration on ${space.name} via ${space.endpoint} with ${params.length} parameters...`);
 
                 let timeoutId;
                 const timeoutPromise = new Promise((_, reject) => {
                     timeoutId = setTimeout(() => reject(new Error("Hugging Face Space timeout (20s reached)")), 20000);
                 });
 
+                const predictPromise = hfClient.predict(space.endpoint, params);
+
                 try {
                     result = await Promise.race([
-                        hfClient.predict("/inference", [
-                            imageBlob,
-                            true, // face_align (pre-align faces for best restoration results)
-                            backgroundEnhance,
-                            faceUpsample,
-                            upscaleFactor,
-                            fidelity,
-                        ]),
+                        predictPromise,
                         timeoutPromise
                     ]);
                 } finally {
                     clearTimeout(timeoutId);
+                    // Silently handle later rejections of the losing predictPromise to prevent unhandled node crash
+                    predictPromise.catch(() => {});
                 }
 
-                console.log(`Processing successful on space: ${space}`);
+                console.log(`Processing successful on space: ${space.name}`);
                 break; // Break loop if prediction succeeds
             } catch (err) {
-                console.error(`Error with space ${space}:`, err.message);
+                console.error(`Error with space ${space.name}:`, err.message);
                 lastError = err;
                 
                 // If it is a quota/rate limit error or service unavailable, try the next space
